@@ -974,21 +974,30 @@ class FrotzEnv():
 
         else:
             orig_score = self.get_score()
-            for act in candidate_actions:
-                self.set_state(state)
-                obs, rew, done, info = self.step(act)
+            cur = [0]
+            def check():
+                for act in candidate_actions[cur[0]:]:
+                    cur[0] += 1
+                    self.set_state(state)
+                    obs, rew, done, info = self.step(act)
 
-                if self._emulator_halted():
-                    self.reset()
-                    continue
-
-                if info['score'] != orig_score or done or self._world_changed():
-                    # Heuristic to ignore actions with side-effect of taking items
-                    if '(Taken)' in obs:
+                    if self._emulator_halted():
+                        self.reset()
                         continue
 
-                    diff = self._get_world_diff()
+                    if info['score'] != orig_score or done or self._world_changed():
+                        # Heuristic to ignore actions with side-effect of taking items
+                        if '(Taken)' in obs:
+                            continue
+
+                        diff = self._get_world_diff()
                     diff2acts[diff].append(act)
+            import func_timeout, sys
+            while cur[0] < len(candidate_actions):
+                try:
+                    func_timeout.func_timeout(1, check)
+                except func_timeout.FunctionTimedOut:
+                    print('filter candidate action timed out', file=sys.stderr)
 
         self.set_state(state)
         return diff2acts
