@@ -991,7 +991,7 @@ class FrotzEnv():
                             continue
 
                         diff = self._get_world_diff()
-                    diff2acts[diff].append(act)
+                        diff2acts[diff].append(act)
             import func_timeout, sys
             while cur[0] < len(candidate_actions):
                 try:
