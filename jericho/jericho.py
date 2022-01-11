@@ -976,7 +976,7 @@ class FrotzEnv():
             orig_score = self.get_score()
             cur = [0]
             def check():
-                for act in candidate_actions[cur[0]:]:
+                for act in candidate_actions[cur[0]:][:128]:
                     cur[0] += 1
                     self.set_state(state)
                     obs, rew, done, info = self.step(act)
