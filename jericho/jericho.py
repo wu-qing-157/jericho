@@ -846,25 +846,34 @@ class FrotzEnv():
         diff2acts = {}
         orig_score = self.get_score()
         state = self.get_state()
-        for act in candidate_actions:
-            self.set_state(state)
-            if isinstance(act, defines.TemplateAction):
-                obs, rew, done, info = self.step(act.action)
-            else:
-                obs, rew, done, info = self.step(act)
-            if self._emulator_halted():
-                self.reset()
-                continue
-            if info['score'] != orig_score or done or self._world_changed():
-                # Heuristic to ignore actions with side-effect of taking items
-                if '(Taken)' in obs:
-                    continue
-                diff = self._get_world_diff()
-                if diff in diff2acts:
-                    if act not in diff2acts[diff]:
-                        diff2acts[diff].append(act)
+        cur = [0]
+        def check():
+            for act in candidate_actions[cur[0]:][:128]:
+                cur[0] += 1
+                self.set_state(state)
+                if isinstance(act, defines.TemplateAction):
+                    obs, rew, done, info = self.step(act.action)
                 else:
-                    diff2acts[diff] = [act]
+                    obs, rew, done, info = self.step(act)
+                if self._emulator_halted():
+                    self.reset()
+                    continue
+                if info['score'] != orig_score or done or self._world_changed():
+                    # Heuristic to ignore actions with side-effect of taking items
+                    if '(Taken)' in obs:
+                        continue
+                    diff = self._get_world_diff()
+                    if diff in diff2acts:
+                        if act not in diff2acts[diff]:
+                            diff2acts[diff].append(act)
+                    else:
+                        diff2acts[diff] = [act]
+        import func_timeout, sys
+        while cur[0] < len(candidate_actions):
+            try:
+                func_timeout.func_timeout(1, check)
+            except func_timeout.FunctionTimedOut:
+                print('filter candidate action timed out', file=sys.stderr)
         self.set_state(state)
         return diff2acts
 
