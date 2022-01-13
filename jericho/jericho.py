@@ -995,7 +995,7 @@ class FrotzEnv():
             import func_timeout, sys
             while cur[0] < len(candidate_actions):
                 try:
-                    func_timeout.func_timeout(1, check)
+                    func_timeout.func_timeout(2, check)
                 except func_timeout.FunctionTimedOut:
                     print('filter candidate action timed out', file=sys.stderr)
 
